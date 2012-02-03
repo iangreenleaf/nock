@@ -904,3 +904,28 @@ tap.test("can use https", function(t) {
 
   req.end();
 });
+
+tap.test("scopes are independent", function(t) {
+  var scope1 = nock('http://www.google.com')
+    .get('/')
+    .reply(200, "Hello World!");
+  var scope2 = nock('http://www.google.com')
+    .get('/')
+    .reply(200, "Hello World!");
+
+  var req = http.request({
+      host: "www.google.com"
+    , path: '/'
+    , port: 80
+  }, function(res) {
+    t.equal(res.statusCode, 200);
+    res.on('end', function() {
+      t.ok(scope1.isDone());
+      t.ok(scope2.isDone()); // fails
+      t.ok(scope1.isDone() || scope2.isDone());
+      t.end();
+    });
+  });
+
+  req.end();
+});
